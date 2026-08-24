@@ -24,8 +24,7 @@ public struct BundleLocalizationProvider: LocalizationProvider {
             locale.rawValue,
             locale.rawValue.replacingOccurrences(of: "-", with: "_"),
             locale.rawValue.lowercased(),
-            locale.languageCode,
-            "Base"
+            locale.languageCode
         ].compactMap { $0 }
 
         for candidate in candidates {

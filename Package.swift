@@ -38,7 +38,8 @@ let package = Package(
         ),
         .testTarget(
             name: "JLI18nTests",
-            dependencies: ["JLI18n", "JLI18nTesting"]
+            dependencies: ["JLI18n", "JLI18nTesting"],
+            resources: [.process("Fixtures")]
         ),
         .testTarget(
             name: "JLI18nSwiftUITests",

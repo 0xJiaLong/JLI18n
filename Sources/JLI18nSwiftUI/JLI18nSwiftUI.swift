@@ -7,6 +7,7 @@ public final class JLI18nEnvironment: ObservableObject {
     @Published public private(set) var locale: LocaleIdentifier
     public let manager: LocalizationManager
     private var observationTask: Task<Void, Never>?
+    private var localeTask: Task<Void, Never>?
 
     public init(manager: LocalizationManager, initialLocale: LocaleIdentifier) {
         self.manager = manager
@@ -22,13 +23,17 @@ public final class JLI18nEnvironment: ObservableObject {
 
     deinit {
         observationTask?.cancel()
+        localeTask?.cancel()
     }
 
     public func setLocale(_ locale: LocaleIdentifier) {
-        Task { [weak self] in
+        localeTask?.cancel()
+        localeTask = Task { [weak self] in
             guard let self else { return }
             await manager.setLocale(locale)
+            guard !Task.isCancelled else { return }
             let current = await manager.currentLocale
+            guard !Task.isCancelled else { return }
             self.locale = current
         }
     }

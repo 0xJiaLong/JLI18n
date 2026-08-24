@@ -27,6 +27,8 @@ enum FormatValidator {
         var tokens: [FormatToken] = []
         var index = 0
         var nextArgument = 1
+        var hasPositionalArguments = false
+        var hasSequentialArguments = false
 
         while index < characters.count {
             guard characters[index] == "%" else {
@@ -52,10 +54,16 @@ enum FormatValidator {
             }
 
             while index < characters.count, "-+ #0'".contains(characters[index]) { index += 1 }
-            while index < characters.count, characters[index].isNumber || characters[index] == "*" { index += 1 }
+            if index < characters.count, characters[index] == "*" {
+                return .failure(.invalid("dynamic width is unsupported"))
+            }
+            while index < characters.count, characters[index].isNumber { index += 1 }
             if index < characters.count, characters[index] == "." {
                 index += 1
-                while index < characters.count, characters[index].isNumber || characters[index] == "*" { index += 1 }
+                if index < characters.count, characters[index] == "*" {
+                    return .failure(.invalid("dynamic precision is unsupported"))
+                }
+                while index < characters.count, characters[index].isNumber { index += 1 }
             }
             if index + 1 < characters.count, characters[index] == "h" || characters[index] == "l" {
                 let length = characters[index]
@@ -67,8 +75,16 @@ enum FormatValidator {
 
             guard index < characters.count else { return .failure(.invalid("missing conversion specifier")) }
             let specifier = characters[index]
-            guard "@diuoxXfFeEgGcsa".contains(specifier) else {
+            guard "@diuoxXfFeEgGca".contains(specifier) else {
                 return .failure(.invalid("unsupported conversion specifier"))
+            }
+            if position != nil {
+                hasPositionalArguments = true
+            } else {
+                hasSequentialArguments = true
+            }
+            guard !(hasPositionalArguments && hasSequentialArguments) else {
+                return .failure(.invalid("positional and sequential arguments cannot be mixed"))
             }
             let resolvedPosition = position ?? nextArgument
             nextArgument = max(nextArgument, resolvedPosition + 1)
@@ -83,7 +99,7 @@ enum FormatValidator {
         switch analyze(format) {
         case .failure(.invalid(let message)): return .invalidFormat(message)
         case .success(let analysis):
-            guard arguments.count >= analysis.argumentCount else {
+            guard arguments.count == analysis.argumentCount else {
                 return .missingArgument(expected: analysis.argumentCount, actual: arguments.count)
             }
             for (index, token) in analysis.tokens.enumerated() {
@@ -99,7 +115,7 @@ enum FormatValidator {
 
     private static func isCompatible(_ argument: any CVarArg, with specifier: Character) -> Bool {
         switch specifier {
-        case "@", "s": return argument is String || argument is NSString
+        case "@": return argument is String || argument is NSString
         case "f", "F", "e", "E", "g", "G": return argument is Double || argument is Float
         case "d", "i", "u", "o", "x", "X":
             return argument is Int || argument is Int8 || argument is Int16 || argument is Int32 || argument is Int64

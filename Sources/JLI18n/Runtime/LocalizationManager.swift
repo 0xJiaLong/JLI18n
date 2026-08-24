@@ -35,6 +35,7 @@ public actor LocalizationManager {
     public var currentLocale: LocaleIdentifier { locale }
 
     public func setLocale(_ requested: LocaleIdentifier) async {
+        guard !Task.isCancelled else { return }
         let normalized = Self.normalize(
             requested,
             supported: configuration.supportedLocales,
@@ -102,7 +103,20 @@ public actor LocalizationManager {
                 report(.missingArgument, key: key, locale: requestedLocale, message: "Pluralized text requires a quantity argument")
                 return fallback(for: key)
             }
-            return localizedPluralString(format, arguments: arguments)
+            guard arguments.count == 1 else {
+                report(.missingArgument, key: key, locale: requestedLocale, message: "Pluralized text requires exactly one quantity argument")
+                return fallback(for: key)
+            }
+            guard Self.isIntegral(arguments[0]) else {
+                report(.argumentTypeMismatch, key: key, locale: requestedLocale, message: "Pluralized text requires an integer quantity argument")
+                return fallback(for: key)
+            }
+            let value = localizedPluralString(format, locale: requestedLocale, arguments: arguments)
+            guard !value.contains("%#@") else {
+                report(.invalidFormat, key: key, locale: requestedLocale, message: "Pluralized resource did not resolve")
+                return fallback(for: key)
+            }
+            return value
         }
 
         switch FormatValidator.validate(format, arguments: arguments) {
@@ -118,13 +132,8 @@ public actor LocalizationManager {
         return fallback(for: key)
     }
 
-    private func localizedPluralString(_ format: String, arguments: [any CVarArg]) -> String {
-        switch arguments.count {
-        case 1: return String.localizedStringWithFormat(format, arguments[0])
-        case 2: return String.localizedStringWithFormat(format, arguments[0], arguments[1])
-        case 3: return String.localizedStringWithFormat(format, arguments[0], arguments[1], arguments[2])
-        default: return String(format: format, arguments: arguments)
-        }
+    private func localizedPluralString(_ format: String, locale: LocaleIdentifier, arguments: [any CVarArg]) -> String {
+        String(format: format, locale: locale.foundationLocale, arguments: arguments)
     }
 
     private func fallbackChain(for locale: LocaleIdentifier) -> [LocaleIdentifier] {
@@ -167,10 +176,24 @@ public actor LocalizationManager {
         if let exact = supported.first(where: { $0.rawValue.caseInsensitiveCompare(requested.rawValue) == .orderedSame }) {
             return exact
         }
-        if let language = requested.languageCode,
-           let match = supported.first(where: { $0.languageCode == language }) {
-            return match
+        if let language = requested.languageCode {
+            if let script = requested.scriptCode,
+               let scriptMatch = supported.first(where: {
+                   $0.languageCode == language && $0.scriptCode == script
+               }) {
+                return scriptMatch
+            }
+            if let languageMatch = supported.first(where: { $0.languageCode == language }) {
+                return languageMatch
+            }
         }
-        return supported.first(where: { $0.rawValue == fallback.rawValue }) ?? fallback
+        return supported.first(where: {
+            $0.rawValue.caseInsensitiveCompare(fallback.rawValue) == .orderedSame
+        }) ?? fallback
+    }
+
+    private static func isIntegral(_ argument: any CVarArg) -> Bool {
+        argument is Int || argument is Int8 || argument is Int16 || argument is Int32 || argument is Int64
+            || argument is UInt || argument is UInt8 || argument is UInt16 || argument is UInt32 || argument is UInt64
     }
 }
