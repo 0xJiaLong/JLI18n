@@ -45,6 +45,7 @@ enum FormatValidator {
             while index < characters.count, characters[index].isNumber { index += 1 }
             if index > start, index < characters.count, characters[index] == "$" {
                 position = Int(String(characters[start..<index]))
+                guard let position, position > 0 else { return .failure(.invalid("argument positions start at 1")) }
                 index += 1
             } else {
                 index = start
