@@ -6,10 +6,22 @@ import SwiftUI
 public final class JLI18nEnvironment: ObservableObject {
     @Published public private(set) var locale: LocaleIdentifier
     public let manager: LocalizationManager
+    private var observationTask: Task<Void, Never>?
 
     public init(manager: LocalizationManager, initialLocale: LocaleIdentifier) {
         self.manager = manager
         self.locale = initialLocale
+        observationTask = Task { [weak self, manager] in
+            let changes = await manager.localeChanges()
+            for await locale in changes {
+                guard !Task.isCancelled else { return }
+                self?.locale = locale
+            }
+        }
+    }
+
+    deinit {
+        observationTask?.cancel()
     }
 
     public func setLocale(_ locale: LocaleIdentifier) {

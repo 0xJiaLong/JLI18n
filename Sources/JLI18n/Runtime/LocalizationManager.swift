@@ -77,10 +77,16 @@ public actor LocalizationManager {
         let requestedLocale = locale
         var value: String?
         for candidate in fallbackChain(for: requestedLocale) {
+            var candidateValues: [String] = []
             for provider in providers {
                 if let resolved = provider.localizedString(for: key, locale: candidate) {
-                    value = resolved
-                    break
+                    candidateValues.append(resolved)
+                }
+            }
+            if let first = candidateValues.first {
+                value = first
+                if Set(candidateValues).count > 1 {
+                    report(.resourceConflict, key: key, locale: candidate, message: "Multiple providers returned different values")
                 }
             }
             if value != nil { break }

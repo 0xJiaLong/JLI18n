@@ -23,6 +23,7 @@ public struct BundleLocalizationProvider: LocalizationProvider {
         let candidates = [
             locale.rawValue,
             locale.rawValue.replacingOccurrences(of: "-", with: "_"),
+            locale.rawValue.lowercased(),
             locale.languageCode,
             "Base"
         ].compactMap { $0 }
