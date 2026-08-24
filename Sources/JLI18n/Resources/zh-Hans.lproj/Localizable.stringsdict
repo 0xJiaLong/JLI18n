@@ -1,0 +1,9 @@
+"cart.item_count" = {
+    "NSStringLocalizedFormatKey" = "%#@items@";
+    "items" = {
+        "NSStringFormatSpecTypeKey" = "NSStringPluralRuleType";
+        "NSStringFormatValueTypeKey" = "ld";
+        "one" = "%ld 件商品";
+        "other" = "%ld 件商品";
+    };
+};

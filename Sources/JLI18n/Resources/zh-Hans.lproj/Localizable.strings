@@ -1,0 +1,5 @@
+"home.title" = "首页";
+"welcome.user" = "欢迎，%@";
+"cart.count" = "购物车中有 %ld 件商品";
+"progress.percent" = "进度：%.1f%%";
+"language.name" = "中文";

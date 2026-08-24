@@ -1,0 +1,5 @@
+"home.title" = "Home";
+"welcome.user" = "Welcome, %@";
+"cart.count" = "%ld item(s)";
+"progress.percent" = "Progress: %.1f%%";
+"language.name" = "English";

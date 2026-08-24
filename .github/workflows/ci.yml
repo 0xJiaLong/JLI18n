@@ -1,0 +1,20 @@
+name: JLI18n CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift tests
+        run: swift test --parallel
+      - name: Build products
+        run: |
+          swift build --product JLI18n
+          swift build --product JLI18nSwiftUI
+          swift build --product JLI18nUIKit
+          swift build --product JLI18nAppKit
+          swift build --product JLI18nTesting
