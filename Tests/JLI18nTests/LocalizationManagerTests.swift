@@ -106,6 +106,21 @@ final class LocalizationManagerTests: XCTestCase {
         XCTAssertFalse(diagnostics[0].message.contains("sensitive-user-input"))
     }
 
+    @available(iOS 18, macOS 15, *)
+    func testResourcePreservesKeyTableAndManagerLocale() async {
+        let (manager, _) = makeManager(
+            values: [:],
+            supported: ["en", "zh-Hans"]
+        )
+        await manager.setLocale("zh-Hans")
+
+        let resource = await manager.resource(for: "alarm.button.stop", table: "AlarmKit")
+
+        XCTAssertEqual(resource.key, "alarm.button.stop")
+        XCTAssertEqual(resource.table, "AlarmKit")
+        XCTAssertEqual(resource.locale.identifier, "zh-Hans")
+    }
+
     func testPersistenceRestoresLocale() async {
         let defaults = UserDefaults(suiteName: "JLI18nPersistenceTests")!
         let persistence = UserDefaultsLocalePersistence(defaults: defaults, key: "locale")

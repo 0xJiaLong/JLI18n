@@ -74,6 +74,21 @@ public actor LocalizationManager {
         resolve(key: key, arguments: arguments.values)
     }
 
+    /// Preserves the localization key for Apple APIs that resolve text outside the app process.
+    @available(iOS 18, macOS 15, *)
+    public func resource(
+        for key: LocalizationKey,
+        table: String? = "Localizable",
+        bundle: LocalizedStringResource.BundleDescription = .main
+    ) -> LocalizedStringResource {
+        LocalizedStringResource(
+            String.LocalizationValue(key.rawValue),
+            table: table,
+            locale: locale.foundationLocale,
+            bundle: bundle
+        )
+    }
+
     private func resolve(key: LocalizationKey, arguments: [any CVarArg]) -> String {
         let requestedLocale = locale
         var value: String?

@@ -22,6 +22,14 @@ let title = await i18n.string(for: "home.title")
 
 产品代码依赖稳定的 `LocalizationKey`，不直接散落 `NSLocalizedString`。UIKit、AppKit 和 SwiftUI 集成分别从对应产品导入。
 
+AlarmKit 等要求 `LocalizedStringResource` 的 Apple API 使用同一个 manager 入口：
+
+```swift
+let resource = await i18n.resource(for: "alarm.button.stop")
+```
+
+该接口保留 Key 与当前 Locale 供系统延迟解析；语言切换后需要重新创建并更新系统配置。
+
 ## 支持范围
 
 - iOS / iPadOS 16+
